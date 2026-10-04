@@ -28,7 +28,8 @@
   --color-border:      #e4e4e1;
   --color-accent:      #185fa5;
 
-  --max-width: 760px;
+  --max-width: 760px;          /* 正文的阅读宽度 */
+  --max-width-shell: 1080px;   /* 页眉页脚的最大宽度（宽屏时更靠边） */
   --radius: 10px;
   --space: 20px;
 }
@@ -87,6 +88,15 @@ a {
   /* margin 的左右设为 auto，浏览器会自动平分剩余空间 → 水平居中 */
   margin: 0 auto;
   padding: 0 var(--space);
+}
+
+/* 页眉和页脚不跟着正文限宽，宽屏时更靠边。
+   .site-header .container 比 .container 多一个类，优先级更高（0,2,0 > 0,1,0），
+   所以这里的 max-width 能覆盖上面那一条。
+   窄屏上 max-width 本来就不生效，所以这条改动只在宽屏可见。 */
+.site-header .container,
+.site-footer .container {
+  max-width: var(--max-width-shell);
 }
 
 /* 页眉：sticky 让它在滚动时吸附在顶部。 */
@@ -162,19 +172,30 @@ a {
   padding: 44px 0 36px;
 }
 
-/* 用 CSS 画一个圆形头像，这样不依赖任何图片文件。
-   以后要换真图片，把布局里的 <div class="avatar"> 换成 <img> 即可。 */
+/*
+   用 CSS 画一个圆形头像，这样不依赖任何图片文件。
+    以后要换真图片，把布局里的 <div class="avatar"> 换成 <img> 即可。 
+  .avatar {
+    flex: 0 0 72px;      不允许被压缩(flex-shrink:0)，基准宽度 72px 
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;  50% 让正方形变成正圆 
+    background: var(--color-accent);
+    color: #fff;
+    display: grid;
+    place-items: center;  Grid 的居中简写：水平垂直同时居中 
+    font-size: 30px;
+    font-weight: 600;
+  }
+*/
+
 .avatar {
-  flex: 0 0 72px;     /* 不允许被压缩(flex-shrink:0)，基准宽度 72px */
+  flex: 0 0 72px;
   width: 72px;
   height: 72px;
-  border-radius: 50%; /* 50% 让正方形变成正圆 */
-  background: var(--color-accent);
-  color: #fff;
-  display: grid;
-  place-items: center; /* Grid 的居中简写：水平垂直同时居中 */
-  font-size: 30px;
-  font-weight: 600;
+  border-radius: 50%;
+  object-fit: cover;   /* 保持比例裁切，不变形 */
+  display: block;      /* 消除行内元素底部的基线间隙 */
 }
 
 .hero h1 {

@@ -31,6 +31,11 @@ const posts = (await getCollection('posts'))
     // 两篇同日期文章的先后顺序会飘忽不定，每次构建都可能不一样。
     return diff !== 0 ? diff : a.data.title.localeCompare(b.data.title, 'zh-CN');
   });
+
+import { Image } from 'astro:assets';
+import avatar from '../assets/images/my_github_profile_picture.jpg';
+// 头像
+
 ---
 
 {/*
@@ -40,7 +45,7 @@ const posts = (await getCollection('posts'))
 */}
 <BaseLayout
   title="首页"
-  description="记录专业课的学习过程，也记录我折腾 Web 的过程。"
+  description="记录我的学习过程，也记录我折腾各种设备的过程。"
 >
   <section class="hero">
     {/*
@@ -54,12 +59,17 @@ const posts = (await getCollection('posts'))
          读屏软件也靠它告诉视障用户这里是什么。
       2. 换成 import 引入的图片，本阶段还能顺带拿到自动压缩和转格式。
     */}
+
+    {/*
     <div class="avatar" aria-hidden="true">F</div>
+    */}
+
+    <Image class="avatar" src={avatar} alt="Fa11Leaf 的头像" />
 
     <div>
-      <h1>这是我的 Weblog</h1>
+      <h1>Fa11Leaf</h1>
       <p class="muted">
-        来自西南交通大学。这里记录专业课的学习过程，也记录我折腾 Web 的过程。
+        黄睿竣，来自西南交通大学大功率半导体科学与工程专业。这里记录我的学习过程，也记录我折腾各种设备的过程。
       </p>
     </div>
   </section>
