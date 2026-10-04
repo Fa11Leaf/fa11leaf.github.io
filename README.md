@@ -6,7 +6,7 @@
 - 源码仓库：[https://github.com/Fa11Leaf/Fa11Leaf.github.io](https://github.com/Fa11Leaf/Fa11Leaf.github.io)
 - 许可：[MIT](LICENSE)
 
-> **与 `README.md` 的关系**：仓库根目录的 `README.md` 侧重记录本站从手写 HTML 到自动部署的分阶段学习过程；本文件是面向访客与协作者的项目技术文档。两者视角不同，均可独立阅读。文中的路径、体积、字段等均为撰写时从源码与实际构建产物中核对得出的值。
+
 
 ---
 
