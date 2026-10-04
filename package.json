@@ -1,15 +1,19 @@
 {
-  "name": "weblog",
+  "name": "fa11leaf-blog",
   "type": "module",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
+  "description": "Fa11Leaf 的个人博客 · Nuxt 4 + @nuxt/content，构建期生成纯静态站点",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "dev": "nuxt dev",
+    "build": "nuxt generate",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "astro": "^7.3.5"
+    "@nuxt/content": "^3.16.1",
+    "better-sqlite3": "^13.0.3",
+    "nuxt": "^4.5.2"
   }
 }

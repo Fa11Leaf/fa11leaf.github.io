@@ -2,26 +2,30 @@
 # .gitignore —— 告诉 git「哪些东西不要纳入版本管理」
 #
 # 判断标准只有一条：这个文件能不能由其他文件重新生成？
-#   - 能（node_modules、dist）→ 忽略，因为它们是「产物」
+#   - 能（node_modules、.output）→ 忽略，因为它们是「产物」
 #   - 不能（你的 .md、图片、源码）→ 必须提交，因为它们是「源」
 #
-# S1/S2 阶段这个文件几乎不需要，因为那时没有构建过程。
-# 有了构建过程，就必须区分「源」和「产物」——这是 S3 的新知识。
+# 注意：忽略规则里【不能写行尾注释】。整行都会被当成匹配模式，
+# 于是 ".output/   # 产物" 这种写法根本匹配不上任何东西。
+# 注释必须独占一行。
 # ============================================================
 
-# 依赖包：体积巨大（数百 MB），且由 package.json + package-lock.json 精确还原
+# 依赖包：体积巨大，且由 package.json + package-lock.json 精确还原
 node_modules/
 
-# 构建产物：由 npm run build 从 src/ 生成，不需要提交
-# （GitHub Pages 的部署会在服务器上重新构建一份）
-dist/
+# Nuxt / Nitro 的构建产物与缓存（自动生成）
+.output/
+.nuxt/
+.data/
 
-# Astro 的本地缓存与类型声明，自动生成
+# 旧版 Astro 的残留目录（保留一行，防止哪天误提交）
 .astro/
+dist/
 
 # 各种日志
 *.log
 npm-debug.log*
+pnpm-debug.log*
 
 # 编辑器与系统杂物
 .DS_Store
