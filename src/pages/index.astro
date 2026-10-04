@@ -1,0 +1,89 @@
+---
+// ============================================================
+// src/pages/index.astro —— 首页
+//
+// 【这个文件名就是网址】这是 Astro 的路由规则，也是 S3 最反直觉的一点：
+//   src/pages/index.astro      →  /
+//   src/pages/about.astro      →  /about
+//   src/pages/posts/[id].astro →  /posts/任意值
+//
+// 你不需要写任何路由配置，文件名即地址。这叫「基于文件的路由」。
+//
+// 对比 S2：那时首页的列表是 JS 在浏览器里渲染的，HTML 里只有一个空 div；
+// 现在列表在构建时就渲染好了。看构建产物的源代码，
+// 文章卡片是实打实的 <a> 标签，不是等 JS 填的空容器。
+// ============================================================
+
+// getCollection 从内容集合里取出所有文章。
+// 注意它是异步的（要读磁盘、解析 Markdown），所以前面有 await。
+// 顶层 await 在 Astro 的 frontmatter 里可以直接用。
+import { getCollection } from 'astro:content';
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+
+// 取出全部文章 → 过滤掉草稿 → 按日期从新到旧排序
+const posts = (await getCollection('posts'))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => {
+    const diff = b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
+    // 日期相同时用标题兜底。如果不加这一层，
+    // 两篇同日期文章的先后顺序会飘忽不定，每次构建都可能不一样。
+    return diff !== 0 ? diff : a.data.title.localeCompare(b.data.title, 'zh-CN');
+  });
+---
+
+{/*
+  下面这几行就是「渲染」这个词的含义：
+  把 <BaseLayout> 标签之间的内容交给布局，替换掉布局里的 <slot />。
+  真正的 <html> / <header> / <footer> 都在布局文件里，这里只写本文独有的部分。
+*/}
+<BaseLayout
+  title="首页"
+  description="记录专业课的学习过程，也记录我折腾 Web 的过程。"
+>
+  <section class="hero">
+    {/*
+      这里用 CSS 画了一个圆形头像，因此不依赖任何图片文件。
+      以后想换成真照片，把下面这个 div 整段替换成：
+
+        <img class="avatar" src="..." alt="我的头像" />
+
+      两点提醒：
+      1. alt 不是装饰品。图片加载失败时它会显示出来，
+         读屏软件也靠它告诉视障用户这里是什么。
+      2. 换成 import 引入的图片，本阶段还能顺带拿到自动压缩和转格式。
+    */}
+    <div class="avatar" aria-hidden="true">F</div>
+
+    <div>
+      <h1>这是我的 Weblog</h1>
+      <p class="muted">
+        来自西南交通大学。这里记录专业课的学习过程，也记录我折腾 Web 的过程。
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">文章</h2>
+
+    {/*
+      对比 S2：这里曾经写着「正在加载…」，然后被 JS 改成「共 N 篇文章」。
+      现在这行字在构建时就定稿了，访客不可能看到中间的加载状态——
+      因为这个中间状态根本不存在了。
+    */}
+    <p class="list-status">共 {posts.length} 篇</p>
+
+    {/*
+      S2 时这里是一个空的 <div id="post-list">，等着 JS 来填；
+      S3 时这里在构建阶段就被填满了。
+
+      用「添加第三篇文章」来体会差别：
+      你只需要新建一个 .md 文件，保存、重新构建，
+      这张卡片就会自己出现在列表里——不用碰这个文件。
+    */}
+    <div class="post-list">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,113 @@
+---
+// ============================================================
+// BaseLayout.astro —— 全站共用的「外壳」
+//
+// 这是 S3 最能立刻感受到价值的地方。
+//
+// 前两版里，<header>、<nav>、<footer> 在 4 个 HTML 文件里各写了一遍。
+// 想改导航，得逐个打开文件改 4 次，漏掉一个就成了不一致的样式。
+//
+// 现在它们只在这里存在一份。4 个页面都把自己的内容「塞」进来
+// （塞进来的位置就是下面的 <slot />），外壳由布局统一提供。
+//
+// .astro 文件的结构分两半：
+//   --- 之间 ---            在这里写 JavaScript，构建时执行
+//   --- 之后 ---            在这里写 HTML（可以混入 {} 里的表达式）
+// ============================================================
+
+// 引入全局样式表。写路径时不再需要数 ../ 的层数，
+// 因为这是构建工具的导入语句，不是浏览器要解析的相对路径。
+import '../styles/global.css';
+
+// interface Props 声明这个组件能接收哪些参数。
+// 它不会在页面里显示，作用是：调用方少传了参数、或传错类型时能被发现。
+interface Props {
+  title: string;
+  description: string;
+}
+
+// Astro.props 就是调用方传进来的对象，这里把它拆出来用。
+const { title, description } = Astro.props;
+
+// 导航项定义成数据。以前新增一个导航链接要在 4 个文件里各加一行，
+// 现在只改这一处，所有页面同步生效。
+const navItems = [
+  { href: '/', label: '首页' },
+  { href: '/about', label: '关于' },
+];
+
+// 判断「当前在哪个页面」，用来给导航项加 aria-current。
+// 以前这一步是手写的——每个页面自己标记哪个链接是当前页；
+// 现在由布局根据实际网址算出来，不可能标错。
+// normalize 是去掉末尾的斜杠，这样 /about 和 /about/ 会被认为是同一个页面。
+const normalize = (path: string) => path.replace(/\/+$/, '') || '/';
+const currentPath = normalize(Astro.url.pathname);
+---
+
+<!doctype html>
+{/* lang 告诉浏览器和读屏软件这是哪种语言，影响断词、朗读口音、翻译提示 */}
+<html lang="zh-CN">
+  <head>
+    {/* charset 必须放在 head 的最前面，否则中文可能变乱码 */}
+    <meta charset="utf-8" />
+
+    {/* viewport 是响应式的前提：没有它，手机上会把页面按 980px 宽渲染再缩小 */}
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {/* title 和 description 由调用方传入。
+         以前这两个值是复制粘贴的，改站点名称要改 4 遍；
+         现在每个页面只声明自己那部分，其余由布局补齐。 */}
+    <title>{title} · Fa11Leaf 的 Weblog</title>
+    <meta name="description" content={description} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+
+  <body>
+    {/*
+      header / nav / main / footer 是"语义化标签"。
+      它们和 <div> 在视觉上没有任何区别，但含义不同：
+      浏览器、读屏软件、搜索引擎都能据此判断这块内容是什么。
+      能用语义标签就不要用 div —— 这是 HTML 的基本修养。
+    */}
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">Fa11Leaf · Weblog</a>
+
+        {/* aria-label 给读屏软件一个说明：这是"主导航"，而不是随便一组链接 */}
+        <nav class="site-nav" aria-label="主导航">
+          <ul>
+            {navItems.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={normalize(item.href) === currentPath ? 'page' : undefined}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    {/* <main> 表示"本页的主要内容"，一个页面只应有一个 */}
+    <main>
+      <div class="container">
+        {/*
+          <slot /> 是这里的关键：它是一块「预留的空位」。
+          哪个页面用了这个布局，它写在 <BaseLayout> 标签之间的内容
+          就会出现在这个位置。
+        */}
+        <slot />
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© 2026 Fa11Leaf · 记录 Web 学习过程</p>
+      </div>
+    </footer>
+  </body>
+</html>
