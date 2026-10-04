@@ -1,0 +1,68 @@
+# ============================================================
+# deploy.yml —— S4 的核心文件
+#
+# 这个文件属于 GitHub 的一个功能：GitHub Actions（持续集成 / 持续部署）。
+# 它告诉 GitHub 一句话：
+#   「以后每次有人往 main 分支推代码，你就在自己的服务器上替我
+#     装依赖、跑构建，把构建结果发布成网站。」
+#
+# 与前三个阶段的根本区别：
+#   S1/S2/S3 的「构建」都发生在你自己的电脑上。
+#   从这份文件起，构建搬到了 GitHub 的机器上——你只需要 push 源码。
+#
+# 文件位置必须是仓库的 .github/workflows/ 目录，扩展名必须是 .yml。
+# ============================================================
+
+name: Deploy to GitHub Pages
+
+# ---------- 一、触发条件：什么时候自动跑 ----------
+on:
+  push:
+    branches: [main] # 只有 main 分支收到推送时才跑
+  workflow_dispatch: # 也允许在仓库的 Actions 页面手动点「Run workflow」触发
+
+# ---------- 二、权限：这个流程被允许做什么 ----------
+# 默认权限是最小的，需要什么显式声明什么。
+permissions:
+  contents: read # 读取仓库代码
+  pages: write # 写入 Pages 站点（部署必需）
+  id-token: write # 让 GitHub 签发一次性凭据供部署使用（部署必需）
+
+# ---------- 三、并发控制：避免两次部署互相覆盖 ----------
+concurrency:
+  group: pages
+  cancel-in-progress: false # 不取消正在进行的部署，让新的排队等待
+
+# ---------- 四、任务 ----------
+jobs:
+  # ===== 任务 1：构建 =====
+  build:
+    runs-on: ubuntu-latest # 跑在 GitHub 提供的一台临时 Ubuntu 机器上，用完销毁
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7 # 把仓库代码取到这台临时机器上
+
+      - name: Install, build and upload
+        uses: withastro/action@v6
+        # 这一个官方 Action 会依次完成三件事：
+        #   1. 读 package-lock.json 判断出用 npm，执行 npm ci 安装依赖
+        #   2. 执行 npm run build，得到 dist/
+        #   3. 把 dist/ 打包成一个「Pages 工件」，传给下面的 deploy 任务
+        #
+        # 它默认使用 Node 24。本项目 Astro 7 要求 Node >= 22.12.0，因此无需额外配置。
+        # 若仓库根目录不是 Astro 项目，需要改成：
+        # with:
+        #   path: ./某子目录
+
+  # ===== 任务 2：部署 =====
+  deploy:
+    needs: build # 必须等 build 成功之后才开始
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # 部署完成后把网址回填到 Actions 页面
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+        # 把上一个任务送来的工件正式发布出去

@@ -1,0 +1,25 @@
+{
+  // ============================================================
+  // tsconfig.json —— TypeScript 的配置
+  //
+  // 你可能会问：我不是在写 HTML 和 Markdown 吗，怎么冒出 TypeScript 了？
+  //
+  // 原因：.astro 文件里 --- 之间的那段代码是 JavaScript，
+  // 而 Astro 的组件默认按 TypeScript 处理。你完全可以只写普通 JS，
+  // 一句类型标注都不写，一切照常工作。这个文件主要做两件事：
+  //   1. 让编辑器知道 Astro 的文件该怎么解析（不再满屏红线）
+  //   2. 提供 astro:content 这些「虚拟模块」的类型提示
+  //
+  // 也就是说：这不是「你必须学 TypeScript」，而是「装了它会更好用」。
+  //
+  // extends 继承官方预设。base 是最宽松的一档；
+  // strictNullChecks 额外要求「这里可能为空」的情况必须处理，
+  // 这个检查性价比很高，所以加上。
+  // 等你熟悉之后，可以把 base 换成 strict 试试更严格的检查。
+  // ============================================================
+  "extends": "astro/tsconfigs/base",
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "allowJs": true
+  }
+}
