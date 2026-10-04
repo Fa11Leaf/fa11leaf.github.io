@@ -27,11 +27,15 @@
   --color-surface:     #f5f5f3;
   --color-border:      #e4e4e1;
   --color-accent:      #185fa5;
+  --color-code-text:   #3f3f3c;  /* 代码块里的文字：深灰，比正文的 #1a1a1a 浅一点 */
 
-  --max-width: 760px;          /* 正文的阅读宽度 */
-  --max-width-shell: 1080px;   /* 页眉页脚的最大宽度（宽屏时更靠边） */
+  --max-width: 1080px;         /* 正文的最大宽度 */
+  --max-width-footer: 1440px;  /* 页脚的最大宽度（比正文宽，但不想铺满超宽屏） */
+  --space: 20px;               /* 正文容器的左右内边距 */
+  /* 页眉页脚距视口左右边缘的留白。下限取 --space，
+     这样窄屏（max-width 本来就不生效）上页眉与正文的左右边界正好对齐。 */
+  --edge: clamp(var(--space), 1.5vw, 32px);
   --radius: 10px;
-  --space: 20px;
 }
 
 
@@ -59,6 +63,18 @@ body {
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
+
+  /* 「粘底页脚」（sticky footer）：
+     内容少的页面（比如关于页）总高度不到一屏时，页脚会紧跟内容停在半空，
+     下面留一大片空白。把 body 变成纵向 flex 容器，再让 main 吃掉剩余空间，
+     页脚就被推到视口底部。
+     高度用 100dvh 而不是 100vh：手机上地址栏收起/展开时 vh 不会变，
+     会把页脚挤到屏幕外，dvh 跟着实际可视高度走。
+     注意别想着"先写 100vh 再写 100dvh 兜底"——构建时的 CSS 压缩器会把
+     前一条同属性声明当作废声明直接删掉，产物里只剩 100dvh。 */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 img {
@@ -90,13 +106,35 @@ a {
   padding: 0 var(--space);
 }
 
-/* 页眉和页脚不跟着正文限宽，宽屏时更靠边。
+/* 页眉：彻底不跟正文一起限宽，max-width 设为 none 之后铺到视口两侧，
+   元素只剩 --edge 那么一点空隙。
    .site-header .container 比 .container 多一个类，优先级更高（0,2,0 > 0,1,0），
-   所以这里的 max-width 能覆盖上面那一条。
-   窄屏上 max-width 本来就不生效，所以这条改动只在宽屏可见。 */
-.site-header .container,
+   所以这里能同时覆盖上面那条的 max-width 和左右 padding。
+   --edge 的下限取的是 --space（20px）：窄屏上 max-width 本来就不生效，
+   让两者相等，页眉的左右边界才和正文对齐。 */
+.site-header .container {
+  max-width: none;
+  padding-left: var(--edge);
+  padding-right: var(--edge);
+}
+
+/* 页脚：不铺满超宽屏，最宽 --max-width-footer（1440px），并且**靠左对齐**。
+   .container 默认是 margin: 0 auto（居中），这里把左边距归零、右边距交给 auto，
+   页脚就固定在左侧：左边界与页眉一致，右边则在 1440px 处收住。
+   屏幕窄于 1440px 时这条不起作用，页脚看起来和页眉一样宽。 */
 .site-footer .container {
-  max-width: var(--max-width-shell);
+  max-width: var(--max-width-footer);
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: var(--edge);
+  padding-right: var(--edge);
+}
+
+/* main 吃掉 body 里剩下的那部分高度，页脚才会被顶到视口底部。
+   这条和 body 上的 display:flex 是一对，少一个「粘底页脚」都不成立。
+   flex-basis 用 auto、shrink 用 0：内容比一屏还高时，main 不要被压扁。 */
+main {
+  flex: 1 0 auto;
 }
 
 /* 页眉：sticky 让它在滚动时吸附在顶部。 */
@@ -362,14 +400,28 @@ a {
   border-radius: 4px;
 }
 
-/* 代码块 */
+/* 代码块
+   这里两处 !important 不是随手加的，两个都跟"内联样式优先级更高"有关：
+   1) 背景：语法高亮（Shiki）会把 background-color 内联写在 <pre> 的 style 上；
+   2) 文字：Shiki 还会给**每一个语法片段**（关键字、字符串、标点……）分别内联一个
+      color，不挨个压下去，代码就会五颜六色，而且一旦主题和背景不配套
+      （比如配置改了但 dev server 没重启），就会出现浅色字落在浅灰底上、几乎看不见。
+   代价是：代码不再有语法配色，整块统一成深灰。
+   （另一半在 astro.config.mjs：高亮主题从默认的 github-dark 换成了 github-light。） */
 .prose pre {
-  background: var(--color-surface);
+  background: var(--color-surface) !important;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 14px 16px;
   overflow-x: auto;   /* 代码太长时横向滚动，而不是撑破页面 */
   margin-bottom: 20px;
+}
+
+/* 连同 <pre> 内部所有片段一起改成同一个深灰。
+   想调深浅只改 :root 里的 --color-code-text 一处即可。 */
+.prose pre,
+.prose pre * {
+  color: var(--color-code-text) !important;
 }
 
 /* 代码块内部的 code 不要再叠加背景和内边距 */
@@ -378,6 +430,34 @@ a {
   padding: 0;
   font-size: 13px;
   line-height: 1.6;
+}
+
+/* 表格：Markdown 里的 | a | b | 只会生成一个裸 <table>，
+   而浏览器默认样式表只给了它 border-spacing: 2px，一条线都不画。
+   所以不写下面这段，表格就是一堆文字漂在那儿，看不出哪格属于哪行——
+   这正是"表格没有线"的原因（改写前，构建产物里 table 选择器的数量是 0）。
+   这里显式补上边框、内边距和表头底色。 */
+.prose table {
+  width: 100%;
+  /* collapse 让相邻单元格共用一条边框；不写就是 separate，会画出双线 */
+  border-collapse: collapse;
+  margin-bottom: 22px;
+  font-size: 15px;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  /* 默认是居中，长文本居中对齐很难读，改回左对齐 */
+  text-align: left;
+  vertical-align: top;
+}
+
+/* 表头：给个浅底色，和表体区分开 */
+.prose thead th {
+  background: var(--color-surface);
+  font-weight: 600;
 }
 
 .prose blockquote {
@@ -417,5 +497,15 @@ a {
 
   .post-header h1 {
     font-size: 22px;
+  }
+
+  /* 窄屏上表格列多，把内边距和字号收一点，尽量在屏内排下 */
+  .prose table {
+    font-size: 14px;
+  }
+
+  .prose th,
+  .prose td {
+    padding: 6px 8px;
   }
 }

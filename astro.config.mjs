@@ -24,4 +24,16 @@ export default defineConfig({
   // 访客拿到的就是完整的 HTML，不需要等服务端或浏览器执行 JS。
   // 这正是 S2 做不到的事（S2 必须等浏览器跑完 fetch 才有内容）。
   output: 'static',
+
+  // markdown：Markdown 怎么被转换成 HTML。
+  // theme 决定代码块的语法高亮配色。Astro 的默认值是 github-dark——
+  // 它会把深色背景**内联**写在每个 <pre> 的 style 属性上，
+  // 于是白底页面上出现一块块黑砖头，而且内联样式优先级很高，
+  // 普通 CSS 覆盖不掉（详见 global.css 里 .prose pre 那段注释）。
+  // 换成浅色主题，代码块才和页面是同一套视觉。
+  markdown: {
+    shikiConfig: {
+      theme: 'github-light',
+    },
+  },
 });
